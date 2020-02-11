@@ -1,0 +1,47 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  color: #0a0a0a;
+  background-color: #060606;
+
+}
+
+a {
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+  margin:0;
+  padding:0;
+}
+ul li{
+  margin:0;
+  padding:0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  margin:0;
+  padding:0;
+}
+/*
+h1, .h1, h2, .h2, h3, .h3 {
+    margin:0;
+    padding:0;
+}
+*/
+
+.fig{
+  margin:0;
+  padding:0;
+}
+

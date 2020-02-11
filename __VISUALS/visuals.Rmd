@@ -1,0 +1,248 @@
+---
+title: "UFC Data 1993 - 2019"
+author: "TheDeepestLearners"
+date: "24/11/2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE, echo=FALSE}
+gc() # garbage collection to automatically release memory
+
+# clear plots and other graphics
+if(!is.null(dev.list())) dev.off()
+graphics.off()
+
+# This clears all warning messages
+assign("last.warning", NULL, envir = baseenv())
+
+# clears the console area
+cat("\014")
+
+#  clears all objects in "global environment"
+rm(list=ls())
+# Define and then load the libraries used in this project
+MYLIBRARIES<-c("plotly",
+               "countrycode",
+               "ggthemes",
+               "gridExtra",
+               "ggplot2"
+              
+
+) 
+
+library(pacman) 
+pacman::p_load(char= MYLIBRARIES,install=TRUE,character.only=TRUE) 
+
+# ********************************************************************* #
+# 1- KNN Accuracy Chart
+acc_df<-read.csv("acc_df.csv",encoding="UTF-8",stringsAsFactors = FALSE)
+is.num <- sapply(acc_df, is.numeric) # Format to 3 Decimal Points
+acc_df [is.num] <- lapply(acc_df [is.num], round, 3)
+
+x <- acc_df$k_value
+y <- acc_df$avg_accuracy
+
+t1 <- list(family = "sans-serif",size = 16,color = 'black') # Text style
+m1 <- list(l = 50,r = 50,b = 100,t = 100,pad = 4) # Magins
+a<-plot_ly(x=x, y=y, type="bar") %>%
+  layout(
+    title="Range of K-Value Accuracy",
+    yaxis = list(
+      title="Accuracy (%)",
+      range=c(65,70)
+    ),
+    xaxis = list(
+      title="K Value",
+      range=c(53,88)
+    )
+  )
+
+
+
+
+
+
+# ********************************************************************* #
+# 2- Weight Class Donut
+ufc_data <- read.csv("data.csv",encoding="UTF-8",stringsAsFactors = TRUE)
+is.num <- sapply(ufc_data, is.numeric) # Format to 3 Decimal Points
+ufc_data [is.num] <- lapply(ufc_data [is.num], round, 3)
+
+weight_class <- ufc_data$weight_class
+weight_class <- na.omit(weight_class) # drop na
+weight_class <- as.data.frame(table(ufc_data$weight_class)) # frequency
+
+t2 <- list(family = "sans-serif",size = 16,color = 'black') # Text style
+m2 <- list(l = 50,r = 50,b = 100,t = 100,pad = 4) # Magins
+b <- plot_ly(weight_class, labels = ~Var1, values = ~Freq)%>%add_pie(hole = 0.6) %>%
+  layout(title = "UFC Weight Class 1993 - 2019",
+         showlegend = T,
+         xaxis = list(showgrid = FALSE, zeroline = FALSE,showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
+         )
+
+
+
+
+
+
+# ********************************************************************* #
+# 3- Location Map Graph
+ufc_data$location <- na.omit(ufc_data$location) # drop na
+countryList <- c()
+for(loc in ufc_data[,]$location){
+  country <- strsplit(loc,",") # split by ,
+  country <- country[[1]][length(country[[1]])] # get country
+  countryList <- c(countryList,country)
+  
+}
+countryDF <- data.frame(countryList)
+countryDF <- as.data.frame(table(countryDF)) # frequency
+codes<-as.data.frame(countrycode(countryDF$countryDF, 'country.name', 'iso3c')) # get contry codes
+countryDF<- data.frame(countryDF,codes)
+names(countryDF) <- c("country", "fights", "code")
+
+t3 <- list(family = "sans-serif",size = 16,color = 'black') # Text style
+m3 <- list(l = 50,r = 50,b = 100,t = 100,pad = 4) # Magins
+l <- list(color = toRGB("grey"), width = 0.5) # light grey boundaries
+g <- list(showframe = FALSE,showcoastlines = TRUE,projection = list(type = 'Mercator')) # specify map projection/options
+c <- plot_geo(countryDF) %>%
+  add_trace(
+    z = ~fights, color = ~fights, colors = 'Blues',
+    text = ~country, locations = ~code, marker = list(line = l)
+  ) %>%
+  colorbar(title = 'UFC Events') %>%
+  layout(
+    title = '1993 - 2019 UFC EVENTS WORLDWIDE',
+    geo = g
+  )
+
+
+
+
+
+
+# ********************************************************************* #
+# 4- Events vs Years BarChart
+ufc_data$date <- na.omit(ufc_data$date) # drop na
+yearsList <- c()
+for(date in ufc_data[,]$date){
+  date <- strsplit(date,"-") # split by -
+  date <- date[[1]][1] # get date
+  yearsList <- c(yearsList,date)
+  
+}
+yearsDF <- data.frame(yearsList)
+yearsDF <- as.data.frame(table(yearsDF)) # frequency
+names(yearsDF) <- c("year", "count")
+x4 = yearsDF$year
+y4 = yearsDF$count
+
+t4 <- list(family = "sans-serif",size = 14,color = 'Black') # Text style
+m4 <- list(l = 50,r = 50,b = 100,t = 100,pad = 4) # Magins
+bar_color <- rep("#3caef2",27)
+bar_color[22] <- '#07466c'
+d <- plot_ly(yearsDF, x = ~x4, y = ~y4, type = 'bar',
+             marker = list(color = bar_color)) %>%
+  layout(title = "UFC Events Over Years",
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "No. Of Events"))
+
+
+
+
+
+
+# ********************************************************************* #
+# 5- Density plots
+
+fighter_measures = data.frame(
+                    "height"  = c(ufc_data$B_Height_cms, ufc_data$B_Height_cms),
+                    "reach"   = c(ufc_data$B_Reach_cms, ufc_data$R_Reach_cms),
+                    "weight"  = c(ufc_data$B_Weight_lbs, ufc_data$R_Weight_lbs),
+                    "age"     = c(ufc_data$B_age, ufc_data$R_age))
+fighter_measures <- na.omit(fighter_measures)
+
+ufc_age <- fighter_measures$age
+density <- density(ufc_age)
+
+t5 <- list(family = "sans-serif",size = 14,color = 'Black') # Text style
+m5 <- list(l = 50,r = 50,b = 100,t = 100,pad = 4) # Magins
+e <- plot_ly(x = ~density$x, y = ~density$y, type = 'scatter', mode = 'lines', fill = 'tozeroy',fillcolor = '#7d97d2') %>%
+  layout(xaxis = list(title = 'Age (years)'),
+         yaxis = list(title = 'Density'),
+         title = "Age Density Plot") 
+
+# ---- 
+ufc_height <- fighter_measures$height
+density2 <- density(ufc_height)
+
+f <- plot_ly(x = ~density2$x, y = ~density2$y, type = 'scatter', mode = 'lines', fill = 'tozeroy', fillcolor = '#ff91a3') %>%
+  layout(xaxis = list(title = 'Hight (cm)'),
+         yaxis = list(title = 'Density'),
+         title = "Height Density Plot")
+
+g = ggplot(fighter_measures, aes(x=age))+
+  geom_density(color="darkblue", fill="lightblue")
+
+h =ggplot(fighter_measures, aes(x=height))+
+  geom_density(color="darkblue", fill="lightblue")
+
+grid.arrange(g, h,  nrow =1)
+
+
+
+```
+
+## KNN
+The Text Goes Here
+- dummy text
+-point 2
+-varies
+
+```{r echo=FALSE}
+a
+```
+
+## UFC Weight Class Donut
+
+You can also embed plots, for example:
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore 
+
+```{r b, echo=FALSE}
+b
+```
+
+## Slide 3
+dummy text:
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore 
+
+UFC MAP WORLD WIDE
+
+```{r echo=FALSE}
+c
+```
+
+## silde 4
+```{r echo=FALSE}
+d
+```
+
+## slide 5
+Age density plot
+```{r echo=FALSE}
+e
+```
+
+## slide 6
+```{r echo=FALSE}
+f
+```
+
+
+## subplots
+
+```{r echo=FALSE}
+grid.arrange(g, h,  nrow =1)
+```
